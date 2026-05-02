@@ -55,6 +55,7 @@ export function createPrismaTestContext(label: string) {
         await dataAccess.client.appFileMount.deleteMany();
         await dataAccess.client.appDomain.deleteMany();
         await dataAccess.client.appPort.deleteMany();
+        await dataAccess.client.appNodePort.deleteMany();
         await dataAccess.client.roleAppPermission.deleteMany();
         await dataAccess.client.roleProjectPermission.deleteMany();
         // AppVolume has a self-referential relation; clear the FK first
@@ -73,7 +74,7 @@ export function createPrismaTestContext(label: string) {
     });
 
     afterAll(async () => {
-        await testClient.$disconnect();
+        await testClient?.$disconnect();
         await fs.rm(dbFile, { force: true });
     });
 

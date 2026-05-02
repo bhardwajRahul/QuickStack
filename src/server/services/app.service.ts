@@ -13,7 +13,7 @@ import svcService from "./svc.service";
 import deploymentLogService, { dlog } from "./deployment-logs.service";
 import crypto from "crypto";
 import networkPolicyService from "./network-policy.service";
-import { AppBasicAuthModel, AppDomainModel, AppFileMountModel, AppModel, AppPortModel, AppVolumeModel } from "@/shared/model/generated-zod";
+import { AppBasicAuthModel, AppDomainModel, AppFileMountModel, AppModel, AppNodePortModel, AppPortModel, AppVolumeModel } from "@/shared/model/generated-zod";
 import { z } from "zod";
 
 class AppService {
@@ -226,6 +226,14 @@ class AppService {
         for (const port of parsedPorts) {
             await this.savePort({
                 ...port,
+                appId: app.id
+            }, tx);
+        }
+
+        const parsedNodePorts = AppNodePortModel.merge(optionalParam).array().parse(app.appNodePorts);
+        for (const nodePort of parsedNodePorts) {
+            await this.saveNodePort({
+                ...nodePort,
                 appId: app.id
             }, tx);
         }

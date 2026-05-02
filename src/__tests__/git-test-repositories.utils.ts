@@ -44,6 +44,7 @@ export function createGitApp(input: Pick<AppExtendedModel, 'id' | 'sourceType' |
         },
         appDomains: [],
         appPorts: [],
+        appNodePorts: [],
         appFileMounts: [],
         appVolumes: [],
         appBasicAuths: [],

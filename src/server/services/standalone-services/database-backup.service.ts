@@ -21,6 +21,7 @@ class DatabaseBackupService {
                                 project: true,
                                 appDomains: true,
                                 appPorts: true,
+                                appNodePorts: true,
                                 appBasicAuths: true,
                                 appVolumes: true,
                                 appFileMounts: true

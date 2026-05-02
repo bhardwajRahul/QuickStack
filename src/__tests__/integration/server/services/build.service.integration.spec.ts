@@ -256,6 +256,7 @@ function createBuildApp(input: BuildIntegrationInput & { id: string; projectId: 
         },
         appDomains: [],
         appPorts: [],
+        appNodePorts: [],
         appFileMounts: [],
         appVolumes: [],
         appBasicAuths: [],

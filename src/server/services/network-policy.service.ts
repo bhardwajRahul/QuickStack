@@ -41,7 +41,7 @@ class NetworkPolicyService {
                     }
                 },
                 policyTypes: ["Ingress", "Egress"],
-                ingress: this.getIngressRules(ingressPolicy),
+                ingress: this.getIngressRules(ingressPolicy, app.appNodePorts),
                 egress: this.getEgressRules(egressPolicy)
             }
         };
@@ -53,7 +53,7 @@ class NetworkPolicyService {
         return parsed.success ? parsed.data : 'ALLOW_ALL';
     }
 
-    private getIngressRules(policyType: AppNetworkPolicyType): V1NetworkPolicyIngressRule[] {
+    private getIngressRules(policyType: AppNetworkPolicyType, nodePorts: { port: number; protocol?: string }[] = []): V1NetworkPolicyIngressRule[] {
         const rules: V1NetworkPolicyIngressRule[] = [];
 
         const traefikFrom: V1NetworkPolicyPeer[] = [
@@ -134,6 +134,26 @@ class NetworkPolicyService {
                     ...backupPodFrom,
                     ...dbToolPod
                 ]
+            });
+        }
+
+        if (nodePorts.length > 0) {
+            const exposedPorts = nodePorts
+                .filter((nodePort, index, self) =>
+                    index === self.findIndex(item =>
+                        item.port === nodePort.port && (item.protocol || 'TCP') === (nodePort.protocol || 'TCP')))
+                .map(nodePort => ({
+                    protocol: (nodePort.protocol || 'TCP') as any,
+                    port: nodePort.port as any
+                }));
+
+            rules.push({
+                from: [{
+                    ipBlock: {
+                        cidr: '0.0.0.0/0'
+                    }
+                }],
+                ports: exposedPorts
             });
         }
 
@@ -445,6 +465,5 @@ class NetworkPolicyService {
 
 const networkPolicyService = new NetworkPolicyService();
 export default networkPolicyService;
-
 
 
