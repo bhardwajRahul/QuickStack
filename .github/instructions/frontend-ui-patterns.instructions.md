@@ -228,7 +228,44 @@ const [selectedItems, setSelectedItems] = useState<Item[]>([]);
 
 ## Dialogs
 
-Use Zustand-backed global dialogs for confirms and inputs — don't create one-off dialog state:
+Use Zustand-backed global dialogs — don't create one-off dialog state.
+
+Use `useDialog` for custom dialog content. Open it from the triggering component and pass a React component as content plus an optional width/height. Inside that content, call `useDialogContext()` to close the dialog and optionally resolve the `openDialog()` promise:
+
+```tsx
+const { openDialog } = useDialog();
+
+return (
+    <Button type="button" onClick={() => openDialog(<ImportDialog />, '760px')}>
+        <Upload className="h-4 w-4" />
+        Import
+    </Button>
+);
+
+function ImportDialog() {
+    const { closeDialog } = useDialogContext();
+
+    return (<>
+        <DialogHeader>
+            <DialogTitle>Import</DialogTitle>
+            <DialogDescription>Optional description</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+            <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => closeDialog(false)}>
+                    Cancel
+                </Button>
+                <Button type="button" onClick={() => closeDialog(true)}>
+                    Import
+                </Button>
+            </div>
+        </div>
+    </>);
+}
+```
+The dialog content and the triggering component usually are in different components/files.
+
+Use `useConfirmDialog` and `useInputDialog` only for simple confirm/input prompts:
 
 ```tsx
 const { openConfirmDialog } = useConfirmDialog();

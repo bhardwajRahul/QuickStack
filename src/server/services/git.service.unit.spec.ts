@@ -1,6 +1,7 @@
 const gitMock = vi.hoisted(() => ({
     clone: vi.fn().mockResolvedValue('cloned'),
     checkout: vi.fn().mockResolvedValue('checked out'),
+    listRemote: vi.fn(),
     env: vi.fn(),
 }));
 
@@ -19,6 +20,7 @@ import gitService from './git.service';
 import appGitSshKeyService from './app-git-ssh-key.service';
 import { PathUtils } from '../utils/path.utils';
 import { mockPathUtilsForTests } from '@/__tests__/path-test.utils';
+import { ServiceException } from '@/shared/model/service.exception.model';
 
 const { originalInternalDataRoot, originalTempDataRoot } = mockPathUtilsForTests();
 
@@ -26,6 +28,7 @@ describe('GitService', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         gitMock.env.mockReturnValue(gitMock);
+        gitMock.listRemote.mockResolvedValue('');
     });
 
     afterAll(() => {
@@ -83,5 +86,81 @@ describe('GitService', () => {
 
         expect(gitMock.clone).toHaveBeenCalledWith('git@github.com:biersoeckli/dummy-node-app.git', expect.any(String));
         expect(gitMock.env).not.toHaveBeenCalled();
+    });
+
+    it('lists remote branches with the default branch first and common branches prioritized', async () => {
+        gitMock.listRemote.mockResolvedValue([
+            'ref: refs/heads/develop\tHEAD',
+            '1111111111111111111111111111111111111111\tHEAD',
+            '2222222222222222222222222222222222222222\trefs/heads/z-feature',
+            '3333333333333333333333333333333333333333\trefs/heads/main',
+            '4444444444444444444444444444444444444444\trefs/heads/develop',
+            '5555555555555555555555555555555555555555\trefs/heads/master',
+            '6666666666666666666666666666666666666666\trefs/heads/a-feature',
+        ].join('\n'));
+
+        await expect(gitService.listRemoteBranches({
+            id: 'app-1',
+            sourceType: 'GIT',
+            gitUrl: 'https://github.com/biersoeckli/dummy-node-app.git',
+        })).resolves.toEqual(['develop', 'main', 'master', 'a-feature', 'z-feature']);
+    });
+
+    it('uses typed HTTPS credentials only for the remote branch lookup', async () => {
+        gitMock.listRemote.mockResolvedValue('1111111111111111111111111111111111111111\trefs/heads/main');
+
+        await gitService.listRemoteBranches({
+            id: 'app-1',
+            sourceType: 'GIT',
+            gitUrl: 'https://github.com/biersoeckli/dummy-node-app.git',
+            gitUsername: 'user',
+            gitToken: 'token',
+        });
+
+        expect(gitMock.listRemote).toHaveBeenCalledWith([
+            '--symref',
+            'https://user:token@github.com/biersoeckli/dummy-node-app.git',
+            'HEAD',
+            'refs/heads/*',
+        ]);
+        expect(gitMock.env).not.toHaveBeenCalled();
+    });
+
+    it('uses and cleans up the app SSH key for SSH remote branch lookup', async () => {
+        vi.mocked(appGitSshKeyService.writePrivateKeyToTempFile).mockResolvedValue('/tmp/id_ed25519');
+        gitMock.listRemote.mockResolvedValue('1111111111111111111111111111111111111111\trefs/heads/main');
+
+        await gitService.listRemoteBranches({
+            id: 'app-1',
+            sourceType: 'GIT_SSH',
+            gitUrl: 'git@github.com:biersoeckli/dummy-node-app.git',
+        });
+
+        expect(gitMock.env).toHaveBeenCalledWith(
+            'GIT_SSH_COMMAND',
+            'ssh -i /tmp/id_ed25519 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null',
+        );
+        expect(gitMock.listRemote).toHaveBeenCalledWith([
+            '--symref',
+            'git@github.com:biersoeckli/dummy-node-app.git',
+            'HEAD',
+            'refs/heads/*',
+        ]);
+        expect(appGitSshKeyService.cleanupTempKeyFile).toHaveBeenCalledWith('app-1');
+    });
+
+    it('maps remote branch lookup git failures to service errors', async () => {
+        gitMock.listRemote.mockRejectedValue(new Error('Repository not found'));
+
+        await expect(gitService.listRemoteBranches({
+            id: 'app-1',
+            sourceType: 'GIT',
+            gitUrl: 'https://github.com/biersoeckli/missing.git',
+        })).rejects.toThrow(ServiceException);
+        await expect(gitService.listRemoteBranches({
+            id: 'app-1',
+            sourceType: 'GIT',
+            gitUrl: 'https://github.com/biersoeckli/missing.git',
+        })).rejects.toThrow('Git repository not found. Please check the repository URL.');
     });
 });

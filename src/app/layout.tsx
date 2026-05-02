@@ -14,6 +14,7 @@ import { getUserSession } from "@/server/utils/action-wrapper.utils";
 import { InputDialog } from "@/components/custom/input-dialog";
 import userGroupService from "@/server/services/user-group.service";
 import PodsStatusPollingProvider from "@/components/custom/pods-status-polling-provider";
+import { GenericDialog } from "@/components/custom/generic-dialog";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -67,6 +68,7 @@ export default async function RootLayout({
         <Toaster />
         <ConfirmDialog />
         <InputDialog />
+        <GenericDialog />
         {userIsLoggedIn && <PodsStatusPollingProvider />}
       </body>
     </html>

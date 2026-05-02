@@ -66,6 +66,18 @@ describe('git.service integration', () => {
         expect(appGitSshKeyServiceMock.writePrivateKeyToTempFile).not.toHaveBeenCalled();
     }, 120_000);
 
+    it('lists branches for the public repository over HTTPS', async () => {
+        const branches = await gitService.listRemoteBranches({
+            id: 'git-public-https-branches',
+            sourceType: 'GIT',
+            gitUrl: GitTestRepositories.publicHttpsUrl,
+        });
+
+        expect(branches[0]).toBe(GitTestRepositories.branch);
+        expect(branches).toContain(GitTestRepositories.branch);
+        expect(appGitSshKeyServiceMock.writePrivateKeyToTempFile).not.toHaveBeenCalled();
+    }, 120_000);
+
     it.skipIf(!getPrivateGitSshKeyFromEnv())(
         'clones the private repository over SSH with an app key',
         async () => {
@@ -80,6 +92,26 @@ describe('git.service integration', () => {
 
             expect(appGitSshKeyServiceMock.writePrivateKeyToTempFile).toHaveBeenCalledWith('git-private-ssh');
             expect(appGitSshKeyServiceMock.cleanupTempKeyFile).toHaveBeenCalledWith('git-private-ssh');
+        },
+        120_000,
+    );
+
+    it.skipIf(!getPrivateGitSshKeyFromEnv())(
+        'lists branches for the private repository over SSH with an app key',
+        async () => {
+            const privateKey = getPrivateGitSshKeyFromEnv()!;
+            appGitSshKeyServiceMock.writePrivateKeyToTempFile.mockImplementation(() => writePrivateKeyToTempFile(privateKey));
+
+            const branches = await gitService.listRemoteBranches({
+                id: 'git-private-ssh-branches',
+                sourceType: 'GIT_SSH',
+                gitUrl: GitTestRepositories.privateSshUrl,
+            });
+
+            expect(branches[0]).toBe(GitTestRepositories.branch);
+            expect(branches).toContain(GitTestRepositories.branch);
+            expect(appGitSshKeyServiceMock.writePrivateKeyToTempFile).toHaveBeenCalledWith('git-private-ssh-branches');
+            expect(appGitSshKeyServiceMock.cleanupTempKeyFile).toHaveBeenCalledWith('git-private-ssh-branches');
         },
         120_000,
     );

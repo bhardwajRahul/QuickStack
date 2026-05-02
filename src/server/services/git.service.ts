@@ -1,11 +1,13 @@
 import { ServiceException } from "@/shared/model/service.exception.model";
 import { AppExtendedModel } from "@/shared/model/app-extended.model";
+import { AppGitBranchesLookupModel } from "@/shared/model/app-source-info.model";
 import simpleGit, { SimpleGit } from "simple-git";
 import { PathUtils } from "../utils/path.utils";
 import { FsUtils } from "../utils/fs.utils";
 import path from "path";
 import appGitSshKeyService from "./app-git-ssh-key.service";
 
+type GitConnectionInfo = AppGitBranchesLookupModel & Pick<AppExtendedModel, 'id'>;
 
 class GitService {
 
@@ -18,29 +20,35 @@ class GitService {
                 internalGitService = new InternalGitService(git, app);
             } catch (error) {
                 console.error('Error while connecting to the git repository:', error);
-                // Provide more specific error messages
-                if (error instanceof Error) {
-                    if (error.message.includes('Permission denied')) {
-                        if (app.sourceType === 'GIT_SSH') {
-                            throw new ServiceException("Git: SSH permission denied. Please check your SSH key configuration and ensure the public key is added to your Git provider.");
-                        }
-                        throw new ServiceException("Git: Permission denied. Please check your Git credentials or SSH key.");
-                    } else if (error.message.includes('Host key verification failed')) {
-                        throw new ServiceException("Git: SSH host key verification failed.");
-                    } else if (error.message.includes('Repository not found')) {
-                        throw new ServiceException("Git repository not found. Please check the repository URL.");
-                    } else if (error.message.includes('Authentication failed')) {
-                        throw new ServiceException("Git authentication failed. Please check your credentials.");
-                    }
-                }
-
-                throw new ServiceException(`Error while connecting to the git repository: ${error}`);
+                throw this.mapGitConnectionError(error, app.sourceType);
             }
             return await action(internalGitService);
         } catch (error) {
             throw error;
         } finally {
             await this.cleanupLocalGitDataForApp(app);
+        }
+    }
+
+    async listRemoteBranches(input: GitConnectionInfo): Promise<string[]> {
+        try {
+            const git = simpleGit();
+            const sshKeyPath = input.sourceType === 'GIT_SSH'
+                ? await appGitSshKeyService.writePrivateKeyToTempFile(input.id)
+                : undefined;
+            if (sshKeyPath) {
+                git.env('GIT_SSH_COMMAND', this.getGitSshCommand(sshKeyPath));
+            }
+
+            const remoteBranches = await git.listRemote(['--symref', this.getGitUrl(input), 'HEAD', 'refs/heads/*']);
+            return this.parseRemoteBranches(remoteBranches);
+        } catch (error) {
+            console.error('Error while listing git branches:', error);
+            throw this.mapGitConnectionError(error, input.sourceType);
+        } finally {
+            if (input.sourceType === 'GIT_SSH') {
+                await appGitSshKeyService.cleanupTempKeyFile(input.id);
+            }
         }
     }
 
@@ -74,7 +82,7 @@ class GitService {
         return git;
     }
 
-    private getGitUrl(app: AppExtendedModel) {
+    private getGitUrl(app: Pick<AppExtendedModel, 'sourceType' | 'gitUrl' | 'gitUsername' | 'gitToken'>) {
         if (app.sourceType !== 'GIT_SSH' && app.gitUsername && app.gitToken) {
             return app.gitUrl!.replace('https://', `https://${app.gitUsername}:${app.gitToken}@`);
         }
@@ -83,6 +91,63 @@ class GitService {
 
     private getGitSshCommand(sshConfigPath: string) {
         return `ssh -i ${sshConfigPath} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null`;
+    }
+
+    private mapGitConnectionError(error: unknown, sourceType: AppExtendedModel['sourceType']) {
+        if (error instanceof Error) {
+            if (error.message.includes('Permission denied')) {
+                if (sourceType === 'GIT_SSH') {
+                    return new ServiceException("Git: SSH permission denied. Please check your SSH key configuration and ensure the public key is added to your Git provider.");
+                }
+                return new ServiceException("Git: Permission denied. Please check your Git credentials or SSH key.");
+            } else if (error.message.includes('Host key verification failed')) {
+                return new ServiceException("Git: SSH host key verification failed.");
+            } else if (error.message.includes('Repository not found')) {
+                return new ServiceException("Git repository not found. Please check the repository URL.");
+            } else if (error.message.includes('Authentication failed')) {
+                return new ServiceException("Git authentication failed. Please check your credentials.");
+            }
+        }
+
+        return new ServiceException(`Error while connecting to the git repository: ${error}`);
+    }
+
+    private parseRemoteBranches(remoteBranches: string) {
+        let defaultBranch: string | undefined;
+        const branches = new Set<string>();
+
+        remoteBranches.split('\n')
+            .map(line => line.trim())
+            .filter(Boolean)
+            .forEach((line) => {
+                const [left, right] = line.split(/\s+/);
+                if (left === 'ref:' && right?.startsWith('refs/heads/') && line.endsWith('HEAD')) {
+                    defaultBranch = this.stripHeadRef(right);
+                    return;
+                }
+                if (right?.startsWith('refs/heads/')) {
+                    branches.add(this.stripHeadRef(right));
+                }
+            });
+
+        return this.sortBranches(Array.from(branches), defaultBranch);
+    }
+
+    private stripHeadRef(ref: string) {
+        return ref.replace(/^refs\/heads\//, '');
+    }
+
+    private sortBranches(branches: string[], defaultBranch?: string) {
+        const priorityBranches = [defaultBranch, 'main', 'master'].filter((branch): branch is string => !!branch);
+        const prioritized = priorityBranches.filter((branch, index) =>
+            branches.includes(branch) && priorityBranches.indexOf(branch) === index
+        );
+        const prioritySet = new Set(prioritized);
+        const rest = branches
+            .filter(branch => !prioritySet.has(branch))
+            .sort((a, b) => a.localeCompare(b));
+
+        return [...prioritized, ...rest];
     }
 }
 

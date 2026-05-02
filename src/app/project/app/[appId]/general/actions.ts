@@ -1,7 +1,7 @@
 'use server'
 
 import { AppRateLimitsModel, appRateLimitsZodModel } from "@/shared/model/app-rate-limits.model";
-import { appSourceInfoContainerZodModel, appSourceInfoGitSshZodModel, appSourceInfoGitZodModel, AppSourceInfoInputModel } from "@/shared/model/app-source-info.model";
+import { appGitBranchesLookupZodModel, appSourceInfoContainerZodModel, appSourceInfoGitSshZodModel, appSourceInfoGitZodModel, AppGitBranchesLookupModel, AppSourceInfoInputModel } from "@/shared/model/app-source-info.model";
 import { ServerActionResult } from "@/shared/model/server-action-error-return.model";
 import { FormValidationException } from "@/shared/model/form-validation-exception.model";
 import { ServiceException } from "@/shared/model/service.exception.model";
@@ -10,6 +10,7 @@ import { isAuthorizedWriteForApp, saveFormAction, simpleAction } from "@/server/
 import { appContainerConfigZodModel } from "@/shared/model/app-container-config.model";
 import { AppContainerConfigInputModel } from "./app-container-config";
 import appGitSshKeyService from "@/server/services/app-git-ssh-key.service";
+import gitService from "@/server/services/git.service";
 
 
 export const saveGeneralAppSourceInfo = async (prevState: any, inputData: AppSourceInfoInputModel, appId: string) => {
@@ -75,6 +76,20 @@ export const generateOrRegenerateGitSshKey = async (appId: string) =>
     simpleAction(async () => {
         await isAuthorizedWriteForApp(appId);
         return await appGitSshKeyService.generateOrRegenerate(appId);
+    });
+
+export const getGitBranches = async (appId: string, inputData: AppGitBranchesLookupModel) =>
+    simpleAction(async () => {
+        const validatedFields = appGitBranchesLookupZodModel.safeParse(inputData);
+        if (!validatedFields.success) {
+            throw new FormValidationException('Please make sure that you entered the correct Git credentials.', validatedFields.error.flatten().fieldErrors);
+        }
+
+        await isAuthorizedWriteForApp(appId);
+        return await gitService.listRemoteBranches({
+            id: appId,
+            ...validatedFields.data,
+        });
     });
 
 export const saveGeneralAppRateLimits = async (prevState: any, inputData: AppRateLimitsModel, appId: string) =>
