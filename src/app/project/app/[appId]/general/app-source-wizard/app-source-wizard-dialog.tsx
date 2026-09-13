@@ -25,9 +25,10 @@ import { defaultDockerfilePath, sourceTypeLabels, SourceType, StepId } from "./t
 import { WizardProgress } from "./wizard-progress";
 import { deploy } from "../../actions";
 
-export function AppSourceWizardDialog({ app, gitSshPublicKey }: {
+export function AppSourceWizardDialog({ app, gitSshPublicKey, redirectOnDeploy = true }: {
     app: AppExtendedModel;
     gitSshPublicKey?: string;
+    redirectOnDeploy?: boolean;
 }) {
     const router = useRouter();
     const { closeDialog } = useDialogContext();
@@ -223,7 +224,9 @@ export function AppSourceWizardDialog({ app, gitSshPublicKey }: {
             await Toast.fromAction(() => deploy(app.id, true), 'Deployment started', 'Staring deployment...');
             closeDialog(true);
             router.refresh();
-            router.push(`/project/app/${app.id}?tabName=overview`);
+            if (redirectOnDeploy) {
+                router.push(`/project/app/${app.id}?tabName=overview`);
+            }
             return;
         }
 

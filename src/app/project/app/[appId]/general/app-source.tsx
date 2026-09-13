@@ -28,7 +28,7 @@ export default function GeneralAppSource({
 
     const openSourceWizard = () => {
         openDialog(
-            <AppSourceWizardDialog app={app} gitSshPublicKey={gitSshPublicKey} />,
+            <AppSourceWizardDialog redirectOnDeploy={hideCard} app={app} gitSshPublicKey={gitSshPublicKey} />,
             {
                 width: 'calc(100vw - 2rem)',
                 maxWidth: '760px',
@@ -46,7 +46,7 @@ export default function GeneralAppSource({
     );
 
     if (hideCard) {
-        return cardContent;
+        return <div className="pt-4">{cardContent}</div>;
     }
 
     return (
