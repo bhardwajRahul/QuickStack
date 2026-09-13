@@ -40,16 +40,16 @@ After installation, open QuickStack in your browser and start deploying your app
 
 ## Key Features
 
-- **Flexible deployments:** Deploy from public or private Git repositories, use any container registry, or bring your own Dockerfile. Railpack provides zero-config builds when you do not need one.
-- **One-click apps and databases:** Launch popular self-hosted apps, PostgreSQL, MySQL, MariaDB, MongoDB, and Redis in seconds.
-- **Production runtime controls:** Scale replicas, set CPU and memory requests and limits, configure health checks, inject environment variables, and mount config files.
-- **Multi-server support:** Expand to multiple nodes, and keep persistent data on replicated Longhorn volumes.
-- **Secure networking:** Isolate apps with deny-by-default network policies, connect unlimited custom domains with automatic Let's Encrypt certificates.
-- **Monitoring:** View live logs, track CPU, RAM and storage usage, and configure health checks.
-- **Backups you control:** Schedule volume backups to any S3-compatible target and create native database dumps.
-- **Team-ready access:** Manage project and per-app permissions with user groups and roles, connect an OIDC provider for SSO, enable 2FA, and issue expiring personal API keys.
-- **Automation and rollbacks:** Trigger deployments through webhooks or the REST API, and roll back an app to a previous version with one click.
-- **Fully self-hosted and open source:** Install on your own infrastructure with one command, update from the UI, and avoid lock-in with GPL-3.0 source code.
+- **Flexible deployments:** Deploy from public or private Git repos and registries using Railpack or your own Dockerfile.
+- **One-click apps and databases:** Launch popular apps, PostgreSQL, MySQL, MariaDB, MongoDB, and Redis in seconds.
+- **Runtime controls:** Scale replicas, set CPU and memory resources, and configure health checks, env vars, and file mounts.
+- **Multi-server support:** Add nodes and keep persistent data on replicated Longhorn volumes.
+- **Secure networking:** Isolate apps by default and add unlimited custom domains with automatic Let's Encrypt SSL.
+- **Monitoring:** Stream logs and monitor CPU, RAM, storage, and health in real time.
+- **Backups you control:** Schedule volume backups to S3-compatible storage and create native database dumps.
+- **Team-ready access:** Control project and app access with user groups, roles, OIDC SSO, 2FA, and expiring API keys.
+- **Automation and rollbacks:** Deploy via webhook or REST API and roll back to a previous version in one click.
+- **Self-hosted and open source:** Install with one command, update from the UI, and avoid lock-in with GPL-3.0 source code.
 
 <img src="/github-assets/qs-app-overview.png" alt="QuickStack app overview" width="100%" />
 
