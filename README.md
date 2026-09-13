@@ -16,27 +16,9 @@ Deploy and manage **applications** and **databases** on your own VPS, Bare Metal
 <img src="/github-assets/quickstack-github-readme-demo-video.gif" alt="QuickStack Logo" style="width: 100%; border: 1px solid #D3D3D3; border-radius: 25px;" />
 <div align="center">
 
-*Deploying a [Next.js app](https://github.com/biersoeckli/modern-beer-app) app with PostgreSQL in under two minutes.*
+*Deploying a Demo app with PostgreSQL in under two minutes.*
 
 </div>
-
-## Key Features
-
-- **App deployments:** Deploy from public or private Git repositories or any Docker image from public or private registries.
-- **Database deployment:** Create MySQL, MariaDB, PostgreSQL, MongoDB and Redis instances in seconds.
-- **Multi-server support:** Run apps across multiple nodes with load balancing and persistent storage.
-- **Domains and routing:** Connect custom domains or use preview domains.
-- **Monitoring:** View live logs, track CPU, RAM and storage usage, and configure health checks.
-- **Automatic HTTPS:** Generate and manage SSL certificates with Let's Encrypt.
-- **Backups:** Schedule backups for apps and databases to external storage.
-- **Multi-user support:** Invite team members with role-based access control.
-- **Self-hosted:** Full control over your infrastructure and data without vendor lock-in.
-
-<img src="/github-assets/qs-app-overview.png" alt="QuickStack app settings" width="100%" />
-
-## How QuickStack Compares
-
-QuickStack sits in the same self-hosted PaaS space as tools like [Coolify](https://coolify.io), [Dokku](https://dokku.com), [Dokploy](https://dokploy.com), [Portainer](https://www.portainer.io) and [CapRover](https://caprover.com), but it takes a more Kubernetes-native approach. Under the hood, QuickStack installs and manages [K3s](https://docs.k3s.io/), a lightweight Kubernetes distribution, together with [Longhorn](https://longhorn.io/docs/latest/what-is-longhorn/) for distributed persistent storage across nodes. This lets QuickStack benefit from stable Kubernetes primitives such as scheduling, services, ingress, persistent volumes, jobs, probes and multi-node orchestration while still providing a simple web interface for day-to-day deployments.
 
 ## Installation
 
@@ -54,15 +36,27 @@ Open the terminal on your server and run:
 curl -sfL https://get.quickstack.dev/setup.sh | sh -
 ```
 
-For non-interactive installation, provide the network interface manually:
+After installation, open QuickStack in your browser and start deploying your applications. For detailed setup instructions, visit the [docs](https://quickstack.dev/docs).
 
-```bash
-curl -sfL https://get.quickstack.dev/setup.sh | INSTALL_K3S_INTERFACE=eth0 sh -
-```
+## Key Features
 
-After installation, open QuickStack in your browser and start deploying your applications.
+- **Flexible deployments:** Deploy from public or private Git repositories, use any container registry, or bring your own Dockerfile. Railpack provides zero-config builds when you do not need one.
+- **One-click apps and databases:** Launch popular self-hosted apps, PostgreSQL, MySQL, MariaDB, MongoDB, and Redis in seconds.
+- **Production runtime controls:** Scale replicas, set CPU and memory requests and limits, configure health checks, inject environment variables, and mount config files.
+- **Multi-server support:** Expand to multiple nodes, and keep persistent data on replicated Longhorn volumes.
+- **Secure networking:** Isolate apps with deny-by-default network policies, connect unlimited custom domains with automatic Let's Encrypt certificates.
+- **Monitoring:** View live logs, track CPU, RAM and storage usage, and configure health checks.
+- **Backups you control:** Schedule volume backups to any S3-compatible target and create native database dumps.
+- **Team-ready access:** Manage project and per-app permissions with user groups and roles, connect an OIDC provider for SSO, enable 2FA, and issue expiring personal API keys.
+- **Automation and rollbacks:** Trigger deployments through webhooks or the REST API, and roll back an app to a previous version with one click.
+- **Fully self-hosted and open source:** Install on your own infrastructure with one command, update from the UI, and avoid lock-in with GPL-3.0 source code.
 
-For detailed setup instructions, visit the [docs](https://quickstack.dev/docs).
+<img src="/github-assets/qs-app-overview.png" alt="QuickStack app overview" width="100%" />
+
+## How QuickStack Compares
+
+QuickStack is a self-hosted, Kubernetes-native alternative to platforms like [Coolify](https://coolify.io), [Dokku](https://dokku.com), [Dokploy](https://dokploy.com), [Portainer](https://www.portainer.io) and [CapRover](https://caprover.com). Under the hood, QuickStack installs and manages [K3s](https://docs.k3s.io/), a lightweight Kubernetes distribution, together with [Longhorn](https://longhorn.io/docs/latest/what-is-longhorn/) for distributed persistent storage across nodes. This gives you proven Kubernetes primitives such as scheduling, services, ingress, persistent volumes, jobs, probes and multi-node orchestration through a simple web interface for day-to-day deployments.
+
 
 ## Contributing
 
